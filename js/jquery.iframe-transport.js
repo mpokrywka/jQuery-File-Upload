@@ -81,6 +81,15 @@
                                 } catch (e) {
                                     response = undefined;
                                 }
+                                // allow ajax callbacks to reference and keep iframe around
+                                // useful for debugging/showing browser network errors
+                                jqXHR.iframe = iframe;
+                                jqXHR.keepIframe = false;
+                                jqXHR.removeIframe = function() {
+                                    delete jqXHR.iframe;
+                                    delete jqXHR.removeIframe;
+                                    form.remove();
+                                };
                                 // The complete callback returns the
                                 // iframe content document as response object:
                                 completeCallback(
@@ -92,7 +101,11 @@
                                 // (happens on form submits to iframe targets):
                                 $('<iframe src="javascript:false;"></iframe>')
                                     .appendTo(form);
-                                form.remove();
+                                if (jqXHR.keepIframe) {
+                                    iframe.unbind('load');
+                                } else {
+                                    jqXHR.removeIframe();
+                                }
                             });
                         form
                             .prop('target', iframe.prop('name'))
